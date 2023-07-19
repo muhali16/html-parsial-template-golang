@@ -5,47 +5,44 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"path/filepath"
 )
 
-func index(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Welcome!"))
-}
-
-func welcome(w http.ResponseWriter, r *http.Request) {
-	fileLocation := filepath.Join("views", "index.html")
-	tmplt, err := template.ParseFiles(fileLocation)
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-	}
-
-	data := map[string]string{
-		"title": "Welcome",
-		"name":  "Ali",
-		"css":   "/static/style.css",
-	}
-
-	tmplt.Execute(w, data)
-}
+type Data map[string]interface{}
 
 func main() {
-	// web route
-	http.HandleFunc("/", index)
-	http.HandleFunc("/welcome", welcome)
+	// start using global template
+	tmplt, err := template.ParseGlob("views/*")
+	if err != nil {
+		log.Println(err.Error())
+	}
 
-	// render static file from directory
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// start templating use global template
+		err := tmplt.ExecuteTemplate(w, "index", nil)
+		if err != nil {
+			log.Println(err.Error())
+		}
+	})
+
+	http.HandleFunc("/welcome", func(w http.ResponseWriter, r *http.Request) {
+		data2 := Data{"name": "Ali"}
+		// start templating use must
+		templated := template.Must(template.ParseFiles("views/_header.html", "views/_title.html", "views/welcome.html"))
+		err := templated.ExecuteTemplate(w, "welcome", data2)
+		if err != nil {
+			log.Println(err.Error())
+		}
+	})
+
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("assets"))))
 
 	address := "localhost:8000"
 	fmt.Println("Server running on", address)
 
-	// first way to serve golang web server
-	// http.ListenAndServe(address, nil)
-
-	// second way to serve golang web server
+	// serve the server
 	server := new(http.Server)
 	server.Addr = address
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil {
 		log.Println(err.Error())
 	}

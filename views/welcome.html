@@ -1,4 +1,4 @@
-{{define "index"}}
+{{define "welcome"}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,8 +6,9 @@
     {{template "_title"}}
 </head>
 <body>
-    <h1>Index</h1>
-    <p>This is index</p>
+  {{template "_header"}}
+  <h3>Logged in as {{.name}}</h3>
+  <p>This is welcome</p>
 </body>
 </html>
 {{end}}
